@@ -3,7 +3,7 @@
 
 (enable-console-print!)
 
-(println "This text is printed from src/super-tetris/core.cljs. Go ahead and edit it and see reloading in action.")
+(println "whatever it's just some text")
 
 ;; define your app data so that it doesn't get over-written on reload
 
@@ -15,3 +15,4 @@
   ;; your application
   ;; (swap! app-state update-in [:__figwheel_counter] inc)
 )
+

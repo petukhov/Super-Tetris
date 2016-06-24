@@ -1,2 +1,24 @@
-/* some style */
+#title {
+    font-family: monospace;
+    text-orientation: upright;
+    writing-mode: vertical-lr;
+    float: left;
+    margin: 0;
+    margin-top: 35px;
+    font-size: 3em;
+    text-decoration: overline;
+    letter-spacing: 0.2em;
+}
 
+#canvas-container {
+    width:100%;
+    text-align: center;
+}
+
+#canvas {
+    height:500px;
+    width: 500px;
+    background-color: ghostwhite;
+    border-style: dashed;
+    border-width: 1px;
+}
