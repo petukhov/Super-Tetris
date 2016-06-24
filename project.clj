@@ -8,7 +8,7 @@
   
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/clojurescript "1.8.51"]
-                 [org.clojure/core.async "0.2.374"
+                 [org.clojure/core.async "0.2.385"
                   :exclusions [org.clojure/tools.reader]]
                  [figwheel-sidecar "0.5.3-1"]]
   
