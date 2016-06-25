@@ -6,17 +6,6 @@
 
 (enable-console-print!)
 
-;; define your app data so that it doesn't get over-written on reload
-
-(defonce app-state (atom {:text "Hello world!"}))
-
-
-(defn on-js-reload []
-  ;; optionally touch your app-state to force rerendering depending on
-  ;; your application
-  ;; (swap! app-state update-in [:__figwheel_counter] inc)
-)
-
 (declare .requestAnimationFrame)
 
 (def canvas (.getElementById js/document "canvas"))
@@ -25,18 +14,26 @@
 (.fillRect context 10 10 100 100)
 
 (def events-chan (chan 5))
+(events/listen js/document "keydown" #(put! events-chan :keydown))
+(.setInterval js/window #(put! events-chan :tick) 300)
+
+(defn render [state]
+  (.clearRect context 0 0 500 500)
+  (.fillRect context (get state :x) (get state :y) 100 100)
+  (println "render"))
+
+(defn process-events [state last-event]
+  (case (get last-event 0)
+    :keydown [true (update state :dx * -1)]
+    :tick    [true (update state :x + (get state :dx))]
+    :nothing [false state]
+    :default))
 
 (defn animation-loop [state]
-  (.clearRect context 0 0 500 500)
-  (.fillRect context (state :x) (state :y) 100 100)
   (go
-    (let [any-event (alts! [events-chan] :default 42)
-          updated-dx (if (= (any-event 0) 42)
-                       state
-                       (update state :dx * -1))
-          new-state (update updated-dx :x + (updated-dx :dx))]
+    (let [last-event (alts! [events-chan] :default :nothing)
+          [should-update? new-state] (process-events state last-event)]
+      (when should-update? (render new-state))
       (.requestAnimationFrame js/window (partial animation-loop new-state)))))
 
-(.requestAnimationFrame js/window (partial animation-loop {:x 20 :y 10 :dx 1}))
-
-(events/listen js/document "keydown" #(put! events-chan %))
+(.requestAnimationFrame js/window (partial animation-loop {:x 20 :y 10 :dx 30}))
