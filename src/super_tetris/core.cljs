@@ -5,28 +5,37 @@
             [cljs.core.async :refer [put! chan <! >! timeout close! alts!]]))
 
 (enable-console-print!)
-
 (declare .requestAnimationFrame)
 
+;;constants
+(def gap-width 2)
+(def initial-state  {:x 20 :y 10 :dx 30})
+
+;;setting up the canvas
 (def canvas (.getElementById js/document "canvas"))
 (def context (.getContext canvas "2d"))
 (set! (.-fillStyle context) "blue")
 (.fillRect context 10 10 100 100)
 
+;;event listeners
 (def events-chan (chan 5))
 (events/listen js/document "keydown" #(put! events-chan :keydown))
 (.setInterval js/window #(put! events-chan :tick) 300)
 
-(def initial-state  {:x 20 :y 10 :dx 30})
+(defn add-fields [square [h-pos v-pos] sq-size]
+  (-> square
+      (assoc :x (+ (* h-pos sq-size) (* h-pos gap-width)))
+      (assoc :y (+ (* v-pos sq-size) (* v-pos gap-width)))
+      (assoc :shown true)))
 
-(defn gen-game-map [vertical-count horizontal-count sq-height sq-width]
+(defn gen-game-map [vertical-count horizontal-count sq-size]
   (let [horizontal-range (range horizontal-count)
         vertical-range (range vertical-count)
         empty-2d-vec (vec (map #(vec (repeat horizontal-count {})) vertical-range))
         indices (for [i horizontal-range
                       j vertical-range]
                   [i j])
-        add-fields (fn [acc curr] (assoc-in acc (conj curr :state) :show))]
+        add-fields (fn [acc curr] (assoc-in acc curr (add-fields {} curr sq-size)))]
     (reduce add-fields empty-2d-vec indices)))
 
 (defn render [state]
