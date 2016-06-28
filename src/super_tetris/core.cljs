@@ -22,21 +22,17 @@
 (events/listen js/document "keydown" #(put! events-chan :keydown))
 (.setInterval js/window #(put! events-chan :tick) 300)
 
-(defn add-fields [square [h-pos v-pos] sq-size]
-  (-> square
-      (assoc :x (+ (* h-pos sq-size) (* h-pos gap-width)))
-      (assoc :y (+ (* v-pos sq-size) (* v-pos gap-width)))
-      (assoc :shown true)))
+(defn create-square [h-pos v-pos sq-size]
+  {:x (+ (* h-pos sq-size) (* h-pos gap-width))
+   :y (+ (* v-pos sq-size) (* v-pos gap-width))
+   :shown true})
 
 (defn gen-game-map [vertical-count horizontal-count sq-size]
-  (let [horizontal-range (range horizontal-count)
-        vertical-range (range vertical-count)
-        empty-2d-vec (vec (map #(vec (repeat horizontal-count {})) vertical-range))
-        indices (for [i horizontal-range
-                      j vertical-range]
-                  [i j])
-        add-fields (fn [acc curr] (assoc-in acc curr (add-fields {} curr sq-size)))]
-    (reduce add-fields empty-2d-vec indices)))
+  (->> (for [i (range horizontal-count), k (range vertical-count)]
+          (create-square i k sq-size))
+       (partition vertical-count)
+       (map #(vec %))
+       (vec)))
 
 (defn render [state]
   (.clearRect context 0 0 500 500)
