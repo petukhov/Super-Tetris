@@ -41,9 +41,11 @@
 
 (defn render [state]
   (.clearRect context 0 0 500 500)
-  (doall (for [sub-vector state
-         square sub-vector]
-     (draw-square square))))
+  (doall
+    (for [sub-vector state
+          square sub-vector]
+      (draw-square square)))
+  nil)
 
 (defn update-state-after-event [state last-event]
   (case (get last-event 0)
