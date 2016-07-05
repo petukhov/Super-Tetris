@@ -46,7 +46,7 @@
 ((fn animation-loop [state]
    (go
      (let [last-event (alts! [events-chan] :default :nothing)
-           [should-update? new-state] (update-state-after-event state last-event)]
+           {:keys [should-update? new-state]} (update-state-after-event state last-event)]
        (when should-update? (render new-state))
        (.requestAnimationFrame js/window (partial animation-loop new-state)))))
   initial-state)

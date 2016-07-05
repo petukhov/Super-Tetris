@@ -8,7 +8,7 @@
 (defn create-square [h-pos v-pos sq-size gap-width]
   {:x (+ (* h-pos sq-size) (* h-pos gap-width))
    :y (+ (* v-pos sq-size) (* v-pos gap-width))
-   :shown true})
+   :shown false})
 
 (defn gen-game-map [vertical-count horizontal-count sq-size gap-width]
   (->> (for [i (range horizontal-count)
