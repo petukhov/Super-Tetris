@@ -1,10 +1,12 @@
-# super-tetris
+# Super Tetris
+### (It's work in progress...)
 
-FIXME: Write a one-line description of your library/project.
+Immutable Tetris. Tetris in ClojureScript. Super Tetris!
 
 ## Overview
 
-FIXME: Write a paragraph about the library/project and highlight its goals.
+A version of the famous game written in ClojureScript, doesn't use any mutation. On each frame, 
+the state is modified and passed as a parameter to requestAnimationFrame. 
 
 ## Setup
 
@@ -34,6 +36,4 @@ get live reloading, nor a REPL.
 
 ## License
 
-Copyright © 2014 FIXME
-
-Distributed under the Eclipse Public License either version 1.0 or (at your option) any later version.
+Copyright Georgy Petukhov © 2016
