@@ -1,5 +1,5 @@
 # Super Tetris
-### (It's work in progress...)
+#### It's work in progress...
 
 Immutable Tetris. Tetris in ClojureScript. Super Tetris!
 
