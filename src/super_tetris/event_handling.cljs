@@ -1,6 +1,6 @@
 (ns super-tetris.event-handling)
 
-(defn move-down [state]
+(defn- move-down [state]
   #_(update-in state [:game-map 6 6 :y] inc)
   state)
 

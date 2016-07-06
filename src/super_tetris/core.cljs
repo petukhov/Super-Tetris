@@ -15,7 +15,7 @@
 (def vertical-count 10)
 (def sq-size 15)
 (def tick-interval 300)
-(def initial-state (init-game-state vertical-count horizontal-count sq-size gap-width))
+(def initial-state (init-game-state horizontal-count vertical-count sq-size gap-width))
 
 ;;setting up the canvas
 (def canvas (.getElementById js/document "canvas"))
