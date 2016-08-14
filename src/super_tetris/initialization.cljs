@@ -1,5 +1,7 @@
 (ns super-tetris.initialization)
 
+(def some-shape [[0 0] [0 1] [0 2] [1 0]])                ; г-shape
+
 ;;;functions related to setting up the game state
 
 (defn- calculate-dimensions [horizontal-count vertical-count sq-size gap-width]
@@ -23,4 +25,6 @@
   (let [[width height] (apply calculate-dimensions args)]
     {:game-map (apply gen-game-map args)
      :width width
-     :height height}))
+     :height height
+     :curr-shape some-shape
+     :y-pos 0}))
