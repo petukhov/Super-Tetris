@@ -27,7 +27,7 @@
 
 ;;event listeners
 (def events-chan (chan 5))
-(events/listen js/document "keydown" #(put! events-chan :keydown))
+(events/listen js/document "keydown" #(do (js/console.log (.-keyCode %)) (put! events-chan ({37 :left-key 39 :right-key} (.-keyCode %)))))
 (.setInterval js/window #(put! events-chan :tick) tick-interval)
 
 ;;functions related to rendering

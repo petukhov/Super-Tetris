@@ -32,7 +32,8 @@
 
 (defn update-state-after-event [state last-event]
   (case (get last-event 0)
-    :keydown {:should-update? true, :new-state (move state :right)}
+    :left-key {:should-update? true, :new-state (move state :left)}
+    :right-key {:should-update? true, :new-state (move state :right)}
     :tick {:should-update? true, :new-state (move state :down)}
     :nothing {:should-update? false, :new-state state}
     :default))
