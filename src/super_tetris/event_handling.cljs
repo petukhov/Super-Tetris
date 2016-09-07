@@ -16,10 +16,16 @@
        (clear-map)
        (apply-shape shape)))
 
+(defn get-left-side-x [shape]
+  (first (first shape)))
+
+(defn get-right-side-x [shape]
+  (first (last shape)))                                   ; TODO: change 10 to the horizontal-count constant
+
 (defn move-shape [shape dir]
   (case dir
-    :left (map #(update % 0 dec) shape)
-    :right (map #(update % 0 inc) shape)
+    :left (if (zero? (get-left-side-x shape)) shape (map #(update % 0 dec) shape))
+    :right (if (= 9 (get-right-side-x shape)) shape (map #(update % 0 inc) shape))
     :down (map #(update % 1 inc) shape)
     :default shape))
 
