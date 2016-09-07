@@ -28,6 +28,11 @@
 (defn make-new-shape []
   [[0 0] [0 1] [0 2] [1 1]])
 
+(defn move-to-center [shape]
+  (let [shape-width (- (get-right-side-x shape) (get-left-side-x shape))
+        offset (js/Math.floor (- 5 (/ shape-width 2)))]
+    (map #(update % 0 + offset) shape)))
+
 (defn move-shape [shape dir]
   (case dir
     :left (if (zero? (get-left-side-x shape))
@@ -37,7 +42,7 @@
              shape
              (map #(update % 0 inc) shape))
     :down (if (= 9 (get-bottom-y shape))
-            (make-new-shape)
+            (move-to-center (make-new-shape))
             (map #(update % 1 inc) shape))
     :default shape))
 
