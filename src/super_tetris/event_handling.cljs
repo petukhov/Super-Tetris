@@ -22,15 +22,23 @@
 (defn get-right-side-x [shape]
   (first (last shape)))
 
+(defn get-bottom-y [shape]
+  (second (apply max-key second shape)))
+
+(defn make-new-shape []
+  [[0 0] [0 1] [0 2] [1 1]])
+
 (defn move-shape [shape dir]
   (case dir
     :left (if (zero? (get-left-side-x shape))
             shape
             (map #(update % 0 dec) shape))
-    :right (if (= 9 (get-right-side-x shape))               ; 9 should be depending on the horizontal count constant.
+    :right (if (= 9 (get-right-side-x shape))               ; value 9 should be depending on the horizontal count constant.
              shape
              (map #(update % 0 inc) shape))
-    :down (map #(update % 1 inc) shape)
+    :down (if (= 9 (get-bottom-y shape))
+            (make-new-shape)
+            (map #(update % 1 inc) shape))
     :default shape))
 
 (defn move [{:keys [game-map curr-shape y-pos] :as state} dir]
