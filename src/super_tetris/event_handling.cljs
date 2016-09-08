@@ -3,7 +3,9 @@
 
 (defn apply-shape [game-map shape]
   (letfn [(show-square [game-map curr]
-            (update-in game-map (conj curr :shown) (constantly true)))]
+            (if (neg? (curr 1))
+              game-map
+              (update-in game-map (conj curr :shown) (constantly true))))]
     (reduce show-square game-map shape)))
 
 (defn clear-map [game-map]
@@ -33,6 +35,10 @@
         offset (js/Math.floor (- 5 (/ shape-width 2)))]
     (map #(update % 0 + offset) shape)))
 
+(defn move-up [shape]
+  (let [shape-height (inc (get-bottom-y shape))]
+    (map #(update % 1 - shape-height) shape)))
+
 (defn move-shape [shape dir]
   (case dir
     :left (if (zero? (get-left-side-x shape))
@@ -42,7 +48,7 @@
              shape
              (map #(update % 0 inc) shape))
     :down (if (= 9 (get-bottom-y shape))
-            (move-to-center (make-new-shape))
+            (move-up (move-to-center (make-new-shape)))
             (map #(update % 1 inc) shape))
     :default shape))
 
