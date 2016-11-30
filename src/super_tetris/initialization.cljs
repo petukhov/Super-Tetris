@@ -27,4 +27,5 @@
      :width width
      :height height
      :curr-shape some-shape
+     :existing-shapes []
      :y-pos 0}))
