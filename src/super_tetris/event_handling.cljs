@@ -21,7 +21,7 @@
        (apply-shape shape)))
 
 (defn update-game-map-with-existing-shapes [game-map existing-shapes]
-  (reduce apply-shape game-map existing-shapes))
+  (apply-shape game-map existing-shapes))
 
 (defn get-left-side-x [shape]
   (first (first shape)))
@@ -32,9 +32,20 @@
 (defn get-bottom-y [shape]
   (second (apply max-key second shape)))
 
+(defn will-reach-bottom? [shape]
+  (= (dec bottom-y) (get-bottom-y shape)))
+
+(defn will-touch-existing-shapes? [shape existing-shapes]
+  (not (empty? (for [x shape
+                 y existing-shapes
+                 :when (= y x)]
+             y))))
+
 (defn reached-bottom? [shape] (= bottom-y (get-bottom-y shape)))
 
-(defn will-reach-bottom? [shape] (= (dec bottom-y) (get-bottom-y shape)))
+(defn will-stop? [shape existing-shapes]
+  (or (will-reach-bottom? shape)
+      (will-touch-existing-shapes? shape existing-shapes)))
 
 (defn make-new-shape []
   [[0 0] [0 1] [0 2] [1 1]])
@@ -52,7 +63,7 @@
 (defn move-left [shape] (map #(update % 0 dec) shape))
 (defn move-right [shape] (map #(update % 0 inc) shape))
 
-(defn move-shape [shape dir]
+(defn move-shape [shape dir existing-shapes]
   (case dir
     :left [(if (zero? (get-left-side-x shape))
              shape
@@ -62,16 +73,16 @@
               (move-right shape)) false]
     :down (if (reached-bottom? shape)
             [(move-up (move-to-center (make-new-shape))) false]
-            [(move-down shape) (will-reach-bottom? shape)])
+            [(move-down shape) (will-stop? shape existing-shapes)])
     :default [shape false]))
 
 (defn update-existing-shapes-if-needed [existing-shapes reached-bottom? shape]
   (if reached-bottom?
-    (conj existing-shapes (move-down shape))
+    (vec (concat existing-shapes (move-down shape)))
     existing-shapes))
 
 (defn move [{:keys [game-map curr-shape existing-shapes] :as state} dir]
-  (let [[shape-updated reached-bottom?] (move-shape curr-shape dir)
+  (let [[shape-updated reached-bottom?] (move-shape curr-shape dir existing-shapes)
         updated-with-curr-shape (update-game-map-with-shape game-map shape-updated)
         updated-with-everything (update-game-map-with-existing-shapes updated-with-curr-shape existing-shapes)]
     (assoc state
