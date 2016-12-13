@@ -1,6 +1,8 @@
 (ns super-tetris.event-handling
   (:require [clojure.walk :refer [prewalk]]))
 
+(declare move-down)
+
 (def bottom-y 9)
 
 (defn apply-shape [game-map shape]
@@ -36,7 +38,7 @@
   (= (dec bottom-y) (get-bottom-y shape)))
 
 (defn will-touch-existing-shapes? [shape existing-shapes]
-  (not (empty? (for [x shape
+  (not (empty? (for [x (move-down shape)
                  y existing-shapes
                  :when (= y x)]
              y))))
@@ -44,7 +46,7 @@
 (defn reached-bottom? [shape] (= bottom-y (get-bottom-y shape)))
 
 (defn will-stop? [shape existing-shapes]
-  (or (will-reach-bottom? shape)
+  (or (reached-bottom? shape)
       (will-touch-existing-shapes? shape existing-shapes)))
 
 (defn make-new-shape []
@@ -71,24 +73,24 @@
     :right [(if (= 9 (get-right-side-x shape))              ; value 9 should be depending on the horizontal count constant.
               shape
               (move-right shape)) false]
-    :down (if (reached-bottom? shape)
-            [(move-up (move-to-center (make-new-shape))) false]
-            [(move-down shape) (will-stop? shape existing-shapes)])
+    :down (if (will-stop? shape existing-shapes)
+            [(move-up (move-to-center (make-new-shape))) true shape]
+            [(move-down shape) false])
     :default [shape false]))
 
 (defn update-existing-shapes-if-needed [existing-shapes reached-bottom? shape]
   (if reached-bottom?
-    (vec (concat existing-shapes (move-down shape)))
+    (vec (concat existing-shapes shape))
     existing-shapes))
 
 (defn move [{:keys [game-map curr-shape existing-shapes] :as state} dir]
-  (let [[shape-updated reached-bottom?] (move-shape curr-shape dir existing-shapes)
+  (let [[shape-updated reached-bottom? old-shape] (move-shape curr-shape dir existing-shapes)
         updated-with-curr-shape (update-game-map-with-shape game-map shape-updated)
         updated-with-everything (update-game-map-with-existing-shapes updated-with-curr-shape existing-shapes)]
     (assoc state
       :game-map updated-with-everything
       :curr-shape shape-updated
-      :existing-shapes (update-existing-shapes-if-needed existing-shapes reached-bottom? curr-shape))))
+      :existing-shapes (update-existing-shapes-if-needed existing-shapes reached-bottom? old-shape))))
 
 (defn update-state-after-event [state last-event]
   (case (get last-event 0)
