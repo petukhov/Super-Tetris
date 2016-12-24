@@ -36,16 +36,16 @@
   (second (apply max-key second shape)))
 
 (defn will-touch-existing-shapes? [shape existing-shapes]
-  (not (empty? (for [x (move-down shape)
-                 y existing-shapes
-                 :when (= y x)]
+  (not (empty? (for [s1 shape
+                     s2 existing-shapes
+                 :when (= s1 s2)]
              y))))
 
 (defn reached-bottom? [shape] (=  bottom-y (get-bottom-y shape)))
 
 (defn will-stop? [shape existing-shapes]
   (or (reached-bottom? shape)
-      (will-touch-existing-shapes? shape existing-shapes)))
+      (will-touch-existing-shapes? (move-down shape) existing-shapes)))
 
 (defn make-new-shape []
   [[0 0] [0 1] [0 2] [1 1]])
@@ -65,10 +65,12 @@
 
 (defn move-shape [shape dir existing-shapes]
   (case dir
-    :left [(if (zero? (get-left-side-x shape))
+    :left [(if (or (zero? (get-left-side-x shape))
+                   (will-touch-existing-shapes? (move-left shape) existing-shapes))
              shape
              (move-left shape)) false]
-    :right [(if (= 9 (get-right-side-x shape))              ; value 9 should be depending on the horizontal count constant.
+    :right [(if (or (= 9 (get-right-side-x shape))
+                    (will-touch-existing-shapes? (move-right shape) existing-shapes))
               shape
               (move-right shape)) false]
     :down (if (will-stop? shape existing-shapes)
