@@ -17,10 +17,11 @@
              (assoc % :shown false)
              %) game-map))
 
-(defn update-game-map-with-shape [game-map shape]
-  (-> game-map
-       (clear-map)
-       (apply-shape shape)))
+(defn update-game-map-with-shape [game-map shape reached-bottom?]
+  (let [game-map (if-not reached-bottom?
+                   (clear-map game-map)
+                   game-map)]
+    (apply-shape game-map shape)))
 
 (defn update-game-map-with-existing-shapes [game-map existing-shapes]
   (apply-shape game-map existing-shapes))
@@ -34,16 +35,13 @@
 (defn get-bottom-y [shape]
   (second (apply max-key second shape)))
 
-(defn will-reach-bottom? [shape]
-  (= (dec bottom-y) (get-bottom-y shape)))
-
 (defn will-touch-existing-shapes? [shape existing-shapes]
   (not (empty? (for [x (move-down shape)
                  y existing-shapes
                  :when (= y x)]
              y))))
 
-(defn reached-bottom? [shape] (= bottom-y (get-bottom-y shape)))
+(defn reached-bottom? [shape] (=  bottom-y (get-bottom-y shape)))
 
 (defn will-stop? [shape existing-shapes]
   (or (reached-bottom? shape)
@@ -85,7 +83,7 @@
 
 (defn move [{:keys [game-map curr-shape existing-shapes] :as state} dir]
   (let [[shape-updated reached-bottom? old-shape] (move-shape curr-shape dir existing-shapes)
-        updated-with-curr-shape (update-game-map-with-shape game-map shape-updated)
+        updated-with-curr-shape (update-game-map-with-shape game-map shape-updated reached-bottom?)
         updated-with-everything (update-game-map-with-existing-shapes updated-with-curr-shape existing-shapes)]
     (assoc state
       :game-map updated-with-everything
