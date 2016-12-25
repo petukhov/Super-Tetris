@@ -14,7 +14,8 @@
 (def horizontal-count 10)
 (def vertical-count 10)
 (def sq-size 15)
-(def tick-interval 300)
+(def tick-interval 5000)
+(def key-map {37 :left-key 39 :right-key 38 :rotate-key 40 :down-key})
 (def initial-state (init-game-state horizontal-count vertical-count sq-size gap-width))
 
 ;;setting up the canvas
@@ -27,8 +28,14 @@
 
 ;;event listeners
 (def events-chan (chan 5))
-(events/listen js/document "keydown" #(do (js/console.log (.-keyCode %)) (put! events-chan ({37 :left-key 39 :right-key} (.-keyCode %)))))
-(.setInterval js/window #(put! events-chan :tick) tick-interval)
+
+(events/listen js/document "keydown"
+               #(do
+                 (js/console.log (.-keyCode %))
+                 (if-let [key-pressed (key-map (.-keyCode %))]
+                   (put! events-chan key-pressed))))
+
+(.setInterval js/window #(put! events-chan :default) tick-interval)
 
 ;;functions related to rendering
 (defn draw-square [square]
@@ -46,7 +53,7 @@
 ((fn animation-loop [state]
    (go
      (let [last-event (alts! [events-chan] :default :nothing)
-           {:keys [should-update? new-state]} (update-state-after-event state last-event)]
-       (when should-update? (render new-state))
+           {:keys [should-rerender? new-state]} (update-state-after-event state last-event)]
+       (when should-rerender? (render new-state))
        (.requestAnimationFrame js/window (partial animation-loop new-state)))))
   initial-state)

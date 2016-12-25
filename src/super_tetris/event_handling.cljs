@@ -27,19 +27,22 @@
   (apply-shape game-map existing-shapes))
 
 (defn get-left-side-x [shape]
-  (first (first shape)))
+  (first (apply min-key first shape)))
 
 (defn get-right-side-x [shape]
-  (first (last shape)))
+  (first (apply max-key first shape)))
 
 (defn get-bottom-y [shape]
   (second (apply max-key second shape)))
+
+(defn get-top-y [shape]
+  (second (apply min-key second shape)))
 
 (defn will-touch-existing-shapes? [shape existing-shapes]
   (not (empty? (for [s1 shape
                      s2 existing-shapes
                  :when (= s1 s2)]
-             y))))
+             s1))))
 
 (defn reached-bottom? [shape] (=  bottom-y (get-bottom-y shape)))
 
@@ -63,6 +66,38 @@
 (defn move-left [shape] (map #(update % 0 dec) shape))
 (defn move-right [shape] (map #(update % 0 inc) shape))
 
+(defn forward-normalizer [x-offset y-offset [x y]]
+  [(- x x-offset) (- y y-offset)])
+
+(defn backward-normalizer [x-offset y-offset [x y]]
+  [(+ x x-offset) (+ y y-offset)])
+
+(defn get-offsets [shape]
+  (let [top-y (get-top-y shape)
+        left-x (get-left-side-x shape)
+        height (- (get-bottom-y shape) (get-top-y shape))
+        width (- (get-right-side-x shape) (get-left-side-x shape))
+        x-offset (+ left-x (.round js/Math (quot width 2)))
+        y-offset (+ top-y (.round js/Math (quot height 2)))]
+    (prn "leftx and topy: " left-x top-y)
+    (prn "width and height: " height width)
+    (prn "x-offset and y-offset: " x-offset y-offset)
+    [x-offset y-offset]))
+
+(defn normalize [shape normalizer [x-offset y-offset]]
+  (vec (map (partial normalizer x-offset y-offset) shape)))
+
+(defn rotate-normalized [shape]
+  (map (fn [[x y]] [(- y) x]) shape))
+
+(defn rotate [shape]
+  (let [offsets (get-offsets shape)]
+    #_(prn offsets)
+    (-> shape
+        (normalize forward-normalizer offsets)
+        (rotate-normalized)
+        (normalize backward-normalizer offsets))))
+
 (defn move-shape [shape dir existing-shapes]
   (case dir
     :left [(if (or (zero? (get-left-side-x shape))
@@ -76,6 +111,7 @@
     :down (if (will-stop? shape existing-shapes)
             [(move-up (move-to-center (make-new-shape))) true shape]
             [(move-down shape) false])
+    :rotate [(rotate shape) false]
     :default [shape false]))
 
 (defn update-existing-shapes-if-needed [existing-shapes reached-bottom? shape]
@@ -83,7 +119,7 @@
     (vec (concat existing-shapes shape))
     existing-shapes))
 
-(defn move [{:keys [game-map curr-shape existing-shapes] :as state} dir]
+(defn transform-state [{:keys [game-map curr-shape existing-shapes] :as state} dir]
   (let [[shape-updated reached-bottom? old-shape] (move-shape curr-shape dir existing-shapes)
         updated-with-curr-shape (update-game-map-with-shape game-map shape-updated reached-bottom?)
         updated-with-everything (update-game-map-with-existing-shapes updated-with-curr-shape existing-shapes)]
@@ -94,8 +130,10 @@
 
 (defn update-state-after-event [state last-event]
   (case (get last-event 0)
-    :left-key {:should-update? true, :new-state (move state :left)}
-    :right-key {:should-update? true, :new-state (move state :right)}
-    :tick {:should-update? true, :new-state (move state :down)}
-    :nothing {:should-update? false, :new-state state}
-    :default))
+    :left-key {:should-rerender? true, :new-state (transform-state state :left)}
+    :right-key {:should-rerender? true, :new-state (transform-state state :right)}
+    :rotate-key {:should-rerender? true, :new-state (transform-state state :rotate)}
+    :down-key {:should-rerender? true, :new-state (transform-state state :down)}
+    :tick {:should-rerender? true, :new-state (transform-state state :down)}
+    :nothing {:should-rerender? false, :new-state state}
+    :default {:should-rerender? false, :new-state state}))
