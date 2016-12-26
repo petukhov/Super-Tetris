@@ -1,5 +1,6 @@
 (ns super-tetris.event-handling
-  (:require [clojure.walk :refer [prewalk]]))
+  (:require [clojure.walk :refer [prewalk]]
+            [super-tetris.shape :refer [create-shape]]))
 
 (declare move-down)
 
@@ -27,6 +28,9 @@
 (defn update-game-map-with-existing-shapes [game-map existing-shapes]
   (apply-shape game-map existing-shapes))
 
+
+;; this is where the Shape functionality begins
+
 (defn get-left-side-x [{:keys [squares center]}]
   (assert squares ":squares is not defined")
   (first (apply min-key first squares)))
@@ -42,6 +46,8 @@
 (defn get-top-y [{:keys [squares center]}]
   (assert squares ":squares is not defined")
   (second (apply min-key second squares)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn will-touch-existing-shapes? [{:keys [squares center]} existing-shapes]
   (assert squares ":squares is not defined")
@@ -69,7 +75,7 @@
     [x-offset y-offset]))
 
 (defn make-new-shape []
-  (let [squares [[0 0] [0 1] [0 2] [0 3]]]
+  (let [squares [[1 3] [1 1] [1 2] [0 0] [0 1]]]
     {:squares squares :center (find-center {:squares squares})}))
 
 (defn move-to-center [{:keys [squares center] :as shape}]
@@ -116,6 +122,8 @@
         (normalize forward-normalizer offsets)
         (rotate-normalized)
         (normalize backward-normalizer offsets))))
+
+;; this is where the Shape functionality ends...
 
 (defn move-shape [shape dir existing-shapes]
   "event dispatcher for moving the shape"
