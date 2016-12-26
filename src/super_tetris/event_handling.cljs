@@ -17,29 +17,35 @@
              (assoc % :shown false)
              %) game-map))
 
-(defn update-game-map-with-shape [game-map shape reached-bottom?]
+(defn update-game-map-with-shape [game-map {:keys [squares center]} reached-bottom?]
+  (assert squares ":squares is not defined")
   (let [game-map (if-not reached-bottom?
                    (clear-map game-map)
                    game-map)]
-    (apply-shape game-map shape)))
+    (apply-shape game-map squares)))
 
 (defn update-game-map-with-existing-shapes [game-map existing-shapes]
   (apply-shape game-map existing-shapes))
 
-(defn get-left-side-x [shape]
-  (first (apply min-key first shape)))
+(defn get-left-side-x [{:keys [squares center]}]
+  (assert squares ":squares is not defined")
+  (first (apply min-key first squares)))
 
-(defn get-right-side-x [shape]
-  (first (apply max-key first shape)))
+(defn get-right-side-x [{:keys [squares center]}]
+  (assert squares ":squares is not defined")
+  (first (apply max-key first squares)))
 
-(defn get-bottom-y [shape]
-  (second (apply max-key second shape)))
+(defn get-bottom-y [{:keys [squares center] :as shape}]
+  (assert squares ":squares is not defined")
+  (second (apply max-key second squares)))
 
-(defn get-top-y [shape]
-  (second (apply min-key second shape)))
+(defn get-top-y [{:keys [squares center]}]
+  (assert squares ":squares is not defined")
+  (second (apply min-key second squares)))
 
-(defn will-touch-existing-shapes? [shape existing-shapes]
-  (not (empty? (for [s1 shape
+(defn will-touch-existing-shapes? [{:keys [squares center]} existing-shapes]
+  (assert squares ":squares is not defined")
+  (not (empty? (for [s1 squares
                      s2 existing-shapes
                  :when (= s1 s2)]
              s1))))
@@ -51,20 +57,32 @@
       (will-touch-existing-shapes? (move-down shape) existing-shapes)))
 
 (defn make-new-shape []
-  [[0 0] [0 1] [0 2] [1 1]])
+  {:squares [[0 0] [0 1] [0 2] [1 1]] :center [0 1]})
 
-(defn move-to-center [shape]
+(defn move-to-center [{:keys [squares] :as shape}]
+  (assert squares ":squares is not defined")
   (let [shape-width (- (get-right-side-x shape) (get-left-side-x shape))
         offset (js/Math.floor (- 5 (/ shape-width 2)))]
-    (map #(update % 0 + offset) shape)))
+    {:squares (map #(update % 0 + offset) squares) :center [5 0]}))
 
-(defn move-up [shape]
+
+(defn move-up [{:keys [squares] :as shape}]
+  (assert squares ":squares is not defined")
   (let [shape-height (inc (get-bottom-y shape))]
-    (map #(update % 1 - shape-height) shape)))
+    {:squares (map #(update % 1 - shape-height) squares) :center [5 (- shape-height)]}))
 
-(defn move-down [shape] (map #(update % 1 inc) shape))
-(defn move-left [shape] (map #(update % 0 dec) shape))
-(defn move-right [shape] (map #(update % 0 inc) shape))
+(defn move-down [{:keys [squares center]}]
+  (assert squares ":squares is not defined")
+  {:squares (map #(update % 1 inc) squares) :center (update center 1 inc)})
+
+(defn move-left [{:keys [squares center]}]
+  (assert squares ":squares is not defined")
+  {:squares (map #(update % 0 dec) squares) :center (update center 0 dec)})
+
+(defn move-right [{:keys [squares center]}]
+  (assert squares ":squares is not defined")
+  {:squares (map #(update % 0 inc) squares) :center (update center 0 inc)})
+
 
 (defn forward-normalizer [x-offset y-offset [x y]]
   [(- x x-offset) (- y y-offset)])
@@ -72,7 +90,8 @@
 (defn backward-normalizer [x-offset y-offset [x y]]
   [(+ x x-offset) (+ y y-offset)])
 
-(defn get-offsets [shape]
+(defn get-offsets [{:keys [squares center] :as shape}]
+  (assert squares ":squares is not defined")
   (let [top-y (get-top-y shape)
         left-x (get-left-side-x shape)
         height (- (get-bottom-y shape) (get-top-y shape))
@@ -87,8 +106,8 @@
 (defn normalize [shape normalizer [x-offset y-offset]]
   (vec (map (partial normalizer x-offset y-offset) shape)))
 
-(defn rotate-normalized [shape]
-  (map (fn [[x y]] [(- y) x]) shape))
+(defn rotate-normalized [{:keys [squares center]}]
+  (map (fn [[x y]] [(- y) x]) squares))
 
 (defn rotate [shape]
   (let [offsets (get-offsets shape)]
@@ -99,6 +118,7 @@
         (normalize backward-normalizer offsets))))
 
 (defn move-shape [shape dir existing-shapes]
+  "event dispatcher for moving the shape"
   (case dir
     :left [(if (or (zero? (get-left-side-x shape))
                    (will-touch-existing-shapes? (move-left shape) existing-shapes))
@@ -116,10 +136,15 @@
 
 (defn update-existing-shapes-if-needed [existing-shapes reached-bottom? shape]
   (if reached-bottom?
-    (vec (concat existing-shapes shape))
+    (vec (concat existing-shapes (:squares shape)))
     existing-shapes))
 
 (defn transform-state [{:keys [game-map curr-shape existing-shapes] :as state} dir]
+  "transforms the whole game state in 4 steps:
+    1. move the current falling shape
+    2. update the game-map with the updated shape
+    3. update the game-map with the existing shapes
+    4. update the existing shapes vector if the current shape has reach the bottom"
   (let [[shape-updated reached-bottom? old-shape] (move-shape curr-shape dir existing-shapes)
         updated-with-curr-shape (update-game-map-with-shape game-map shape-updated reached-bottom?)
         updated-with-everything (update-game-map-with-existing-shapes updated-with-curr-shape existing-shapes)]
@@ -129,6 +154,7 @@
       :existing-shapes (update-existing-shapes-if-needed existing-shapes reached-bottom? old-shape))))
 
 (defn update-state-after-event [state last-event]
+  "basically the event dispatcher"
   (case (get last-event 0)
     :left-key {:should-rerender? true, :new-state (transform-state state :left)}
     :right-key {:should-rerender? true, :new-state (transform-state state :right)}
