@@ -42,9 +42,6 @@
         width (- (-get-right-side-x shape) (-get-left-side-x shape))
         x-offset (+ left-x (.round js/Math (quot width 2)))
         y-offset (+ top-y (.round js/Math (quot height 2)))]
-    (prn "leftx and topy: " left-x top-y)
-    (prn "width and height: " width height)
-    (prn "x-offset and y-offset: " x-offset y-offset)
     [x-offset y-offset]))
 
 

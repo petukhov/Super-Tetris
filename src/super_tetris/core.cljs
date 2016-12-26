@@ -1,7 +1,6 @@
 (ns super-tetris.core
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
-  (:require [goog.dom :as dom]
-            [goog.events :as events]
+  (:require [goog.events :as events]
             [cljs.core.async :refer [put! chan <! >! timeout close! alts!]]
             [super-tetris.initialization :refer [init-game-state]]
             [super-tetris.event-handling :refer [update-state-after-event]]))

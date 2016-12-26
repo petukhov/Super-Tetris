@@ -1,6 +1,7 @@
-(ns super-tetris.initialization)
+(ns super-tetris.initialization
+  (:use [super-tetris.shape :only [create-shape]]))
 
-(def some-shape {:squares [[0 0] [0 1] [0 2] [0 3]] :center [0 2]})
+(def some-shape (create-shape))
 
 ;;;functions related to setting up the game state
 
