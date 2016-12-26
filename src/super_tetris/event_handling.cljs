@@ -56,20 +56,33 @@
   (or (reached-bottom? shape)
       (will-touch-existing-shapes? (move-down shape) existing-shapes)))
 
-(defn make-new-shape []
-  {:squares [[0 0] [0 1] [0 2] [1 1]] :center [0 1]})
+(defn find-center [shape]
+  (let [top-y (get-top-y shape)
+        left-x (get-left-side-x shape)
+        height (- (get-bottom-y shape) (get-top-y shape))
+        width (- (get-right-side-x shape) (get-left-side-x shape))
+        x-offset (+ left-x (.round js/Math (quot width 2)))
+        y-offset (+ top-y (.round js/Math (quot height 2)))]
+    (prn "leftx and topy: " left-x top-y)
+    (prn "width and height: " width height)
+    (prn "x-offset and y-offset: " x-offset y-offset)
+    [x-offset y-offset]))
 
-(defn move-to-center [{:keys [squares] :as shape}]
+(defn make-new-shape []
+  (let [squares [[0 0] [0 1] [0 2] [0 3]]]
+    {:squares squares :center (find-center {:squares squares})}))
+
+(defn move-to-center [{:keys [squares center] :as shape}]
   (assert squares ":squares is not defined")
   (let [shape-width (- (get-right-side-x shape) (get-left-side-x shape))
         offset (js/Math.floor (- 5 (/ shape-width 2)))]
-    {:squares (map #(update % 0 + offset) squares) :center [5 0]}))
+    {:squares (map #(update % 0 + offset) squares) :center (update center 0 + offset)}))
 
 
-(defn move-up [{:keys [squares] :as shape}]
+(defn move-up [{:keys [squares center] :as shape}]
   (assert squares ":squares is not defined")
   (let [shape-height (inc (get-bottom-y shape))]
-    {:squares (map #(update % 1 - shape-height) squares) :center [5 (- shape-height)]}))
+    {:squares (map #(update % 1 - shape-height) squares) :center (update center 1 - shape-height)}))
 
 (defn move-down [{:keys [squares center]}]
   (assert squares ":squares is not defined")
@@ -90,27 +103,14 @@
 (defn backward-normalizer [x-offset y-offset [x y]]
   [(+ x x-offset) (+ y y-offset)])
 
-(defn get-offsets [{:keys [squares center] :as shape}]
-  (assert squares ":squares is not defined")
-  (let [top-y (get-top-y shape)
-        left-x (get-left-side-x shape)
-        height (- (get-bottom-y shape) (get-top-y shape))
-        width (- (get-right-side-x shape) (get-left-side-x shape))
-        x-offset (+ left-x (.round js/Math (quot width 2)))
-        y-offset (+ top-y (.round js/Math (quot height 2)))]
-    (prn "leftx and topy: " left-x top-y)
-    (prn "width and height: " height width)
-    (prn "x-offset and y-offset: " x-offset y-offset)
-    [x-offset y-offset]))
-
-(defn normalize [shape normalizer [x-offset y-offset]]
-  (vec (map (partial normalizer x-offset y-offset) shape)))
+(defn normalize [{:keys [squares center]} normalizer [x-offset y-offset]]
+  {:squares (vec (map (partial normalizer x-offset y-offset) squares)) :center center})
 
 (defn rotate-normalized [{:keys [squares center]}]
-  (map (fn [[x y]] [(- y) x]) squares))
+  {:squares (map (fn [[x y]] [(- y) x]) squares) :center center})
 
 (defn rotate [shape]
-  (let [offsets (get-offsets shape)]
+  (let [offsets (:center shape)]
     #_(prn offsets)
     (-> shape
         (normalize forward-normalizer offsets)
