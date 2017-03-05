@@ -3,7 +3,7 @@
                                    get-right-side-x get-bottom-y get-top-y
                                    will-touch-existing-shapes? reached-bottom?
                                    move-to-center move-up move-down
-                                   move-left move-right rotate]])
+                                   move-left move-right rotate outside-the-map?]])
   (:require [clojure.walk :refer [prewalk]]))
 
 (defn apply-shape [game-map shape]
@@ -42,7 +42,10 @@
     :down (if (will-stop? shape existing-shapes)
             [(move-up (move-to-center (create-shape))) true shape]
             [(move-down shape) false])
-    :rotate [(rotate shape) false]
+    :rotate [(if (or (outside-the-map? (rotate shape))
+                     (will-touch-existing-shapes? (rotate shape) existing-shapes))
+               shape
+               (rotate shape)) false]
     :default [shape false]))
 
 (defn update-existing-shapes-if-needed [existing-shapes reached-bottom? shape]

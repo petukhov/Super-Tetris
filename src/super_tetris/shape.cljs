@@ -1,7 +1,7 @@
 (ns super-tetris.shape)
 
 (def bottom-y 9)
-(def initial-squares [[0 0] [0 1] [0 2] [1 1]])
+(def initial-squares [[0 0] [0 1] [0 2] [1 1] [1 2] [1 3]])
 
 
 ;; helper functions. used in find-center and then in implementation of IShape protocol
@@ -54,6 +54,7 @@
   (will-touch-existing-shapes? [_ existing-shapes])
   (reached-bottom? [this])
   (will-stop? [this existing-shapes])
+  (outside-the-map? [this])
 
   (move-to-center [this])
   (move-up [this])
@@ -86,6 +87,10 @@
     (assert existing-shapes "existing-shapes is not defined")
     (or (reached-bottom? this)
         (will-touch-existing-shapes? (move-down this) existing-shapes)))
+
+  (outside-the-map? [this]
+    (or (<= (get-left-side-x this) 0)
+        (>= (get-right-side-x this) 9)))
 
   (move-to-center [this]
     (let [shape-width (- (get-right-side-x this) (get-left-side-x this))
