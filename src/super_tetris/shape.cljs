@@ -1,8 +1,8 @@
 (ns super-tetris.shape)
 
 (def bottom-y 9)
-(def initial-squares [[0 0] [0 1] [0 2] [1 1] [1 2] [1 3]])
 
+(def initial-squares [[0 0] [0 1] [0 2]])
 
 ;; helper functions. used in find-center and then in implementation of IShape protocol
 

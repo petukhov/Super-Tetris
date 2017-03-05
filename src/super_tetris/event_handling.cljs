@@ -6,27 +6,45 @@
                                    move-left move-right rotate outside-the-map?]])
   (:require [clojure.walk :refer [prewalk]]))
 
+(def map-width 10)
+
 (defn apply-shape [game-map shape]
-  (letfn [(show-square [game-map curr]
+  (letfn [(-show-square [game-map curr]
             (if (neg? (curr 1))
               game-map
               (update-in game-map (conj curr :shown) (constantly true))))]
-    (reduce show-square game-map shape)))
+    (reduce -show-square game-map shape)))
 
 (defn clear-map [game-map]
   (prewalk #(if (true? (:shown %))
              (assoc % :shown false)
              %) game-map))
 
-(defn update-game-map-with-shape [game-map {:keys [squares]} reached-bottom?]
-  (assert squares ":squares is not defined")
-  (let [game-map (if-not reached-bottom?
-                   (clear-map game-map)
-                   game-map)]
-    (apply-shape game-map squares)))
+(defn get-full-rows [existing-shapes {:keys [squares]} ]
+  (prn existing-shapes squares)
+  (let [all-squares (vec (concat squares existing-shapes))
+        grouped-by-row (group-by second all-squares)]
+    (prn grouped-by-row)
+    (filter (fn [[_ val]] (= (count val) map-width)) grouped-by-row)))
 
-(defn update-game-map-with-existing-shapes [game-map existing-shapes]
-  (apply-shape game-map existing-shapes))
+(defn clear-rows [game-map existing-shapes full-rows]
+  [game-map existing-shapes])
+
+(defn clear-rows-in-old-shape [squares full-rows]
+  squares)
+
+(defn update-game-map [game-map {:keys [squares]} reached-bottom? existing-shapes old-shape]
+  (assert squares ":squares is not defined")
+  (prn "squares is: " squares)
+  (let [[game-map updated-existing-shapes] (condp = reached-bottom?
+                   true (let [full-rows (get-full-rows existing-shapes old-shape)]
+                          (prn "full rows" full-rows)
+                          (clear-rows game-map existing-shapes (keys full-rows)))
+                   false [(clear-map game-map) existing-shapes])
+        updated-old-shape (clear-rows-in-old-shape squares full-rows)
+        all-squares (vec (concat updated-old-shape updated-existing-shapes))] ; consider adding remove-full rows here. it should take full-rows parameter.
+    ;; add another form  in the above let form where full-rows will be found.
+    [(apply-shape game-map all-squares) updated-existing-shapes]))
 
 (defn move-shape [shape dir existing-shapes]
   "event dispatcher for moving the shape"
@@ -60,10 +78,9 @@
     3. update the game-map with the existing shapes
     4. update the existing shapes vector if the current shape has reach the bottom"
   (let [[shape-updated reached-bottom? old-shape] (move-shape curr-shape dir existing-shapes)
-        updated-with-curr-shape (update-game-map-with-shape game-map shape-updated reached-bottom?)
-        updated-with-everything (update-game-map-with-existing-shapes updated-with-curr-shape existing-shapes)]
+        [updated-game-map existing-shapes] (update-game-map game-map shape-updated reached-bottom? existing-shapes old-shape)]
     (assoc state
-      :game-map updated-with-everything
+      :game-map updated-game-map
       :curr-shape shape-updated
       :existing-shapes (update-existing-shapes-if-needed existing-shapes reached-bottom? old-shape))))
 
