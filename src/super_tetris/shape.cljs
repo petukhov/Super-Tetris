@@ -89,8 +89,9 @@
         (will-touch-existing-shapes? (move-down this) existing-shapes)))
 
   (outside-the-map? [this]
-    (or (<= (get-left-side-x this) 0)
-        (>= (get-right-side-x this) 9)))
+    (or (< (get-left-side-x this) 0)
+        (> (get-right-side-x this) 9)
+        (> (get-bottom-y this) bottom-y)))
 
   (move-to-center [this]
     (let [shape-width (- (get-right-side-x this) (get-left-side-x this))
