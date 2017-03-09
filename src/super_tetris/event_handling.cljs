@@ -27,16 +27,28 @@
     (prn grouped-by-row)
     (filter (fn [[_ val]] (= (count val) map-width)) grouped-by-row)))
 
-(defn clear-rows [game-map existing-shapes full-rows]
-  [game-map existing-shapes])
+(defn clear-rows [existing-shapes full-rows]
+  existing-shapes)
 
 (defn clear-rows-in-old-shape [squares full-rows]
   squares)
 
+(defn mixin-old-shape [existing-shapes old-shape]
+  (vec (concat existing-shapes (:squares old-shape))))
+
 (defn update-game-map [game-map {:keys [squares]} reached-bottom? existing-shapes old-shape]
   (assert squares ":squares is not defined")
-  (prn "squares is: " squares)
-  (let [[game-map updated-existing-shapes] (condp = reached-bottom?
+  (if reached-bottom?
+    (let [full-rows (get-full-rows existing-shapes old-shape)
+          updated-existing-shapes (clear-rows existing-shapes (keys full-rows))
+          updated-old-shape (clear-rows-in-old-shape squares (keys full-rows))
+          all-squares (vec (concat updated-old-shape updated-existing-shapes))]
+      #_(if (not-empty full-rows) (prn "there is a full row!") nil)
+      [(apply-shape game-map all-squares) (mixin-old-shape updated-existing-shapes old-shape)])
+    (let [all-squares (vec (concat squares existing-shapes))]
+      [(apply-shape (clear-map game-map) all-squares) existing-shapes]))
+
+  #_(let [[game-map updated-existing-shapes] (condp = reached-bottom?
                    true (let [full-rows (get-full-rows existing-shapes old-shape)]
                           (prn "full rows" full-rows)
                           (clear-rows game-map existing-shapes (keys full-rows)))
@@ -82,7 +94,7 @@
     (assoc state
       :game-map updated-game-map
       :curr-shape shape-updated
-      :existing-shapes (update-existing-shapes-if-needed existing-shapes reached-bottom? old-shape))))
+      :existing-shapes existing-shapes #_(update-existing-shapes-if-needed existing-shapes reached-bottom? old-shape))))
 
 (defn update-state-after-event [state last-event]
   "basically the event dispatcher"
