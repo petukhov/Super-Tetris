@@ -21,42 +21,32 @@
              %) game-map))
 
 (defn get-full-rows [existing-shapes {:keys [squares]} ]
-  (prn existing-shapes squares)
   (let [all-squares (vec (concat squares existing-shapes))
         grouped-by-row (group-by second all-squares)]
-    (prn grouped-by-row)
     (filter (fn [[_ val]] (= (count val) map-width)) grouped-by-row)))
 
-(defn clear-rows [existing-shapes full-rows]
-  existing-shapes)
+(defn- belongs-to-row? [full-rows one-square]
+  (some #{(second one-square)} full-rows))
 
-(defn clear-rows-in-old-shape [squares full-rows]
-  squares)
+(defn remove-full-row-squares [squares full-rows]
+  (let [filtered-squares (filter (complement (partial belongs-to-row? full-rows)) squares)]
+    (map #(if (< (second %) (first full-rows))
+           (assoc % 1 (+ (second %) (count full-rows)))
+           %) filtered-squares)))
 
 (defn mixin-old-shape [existing-shapes old-shape]
-  (vec (concat existing-shapes (:squares old-shape))))
+  (vec (concat existing-shapes old-shape)))
 
 (defn update-game-map [game-map {:keys [squares]} reached-bottom? existing-shapes old-shape]
   (assert squares ":squares is not defined")
   (if reached-bottom?
     (let [full-rows (get-full-rows existing-shapes old-shape)
-          updated-existing-shapes (clear-rows existing-shapes (keys full-rows))
-          updated-old-shape (clear-rows-in-old-shape squares (keys full-rows))
+          updated-existing-shapes (remove-full-row-squares existing-shapes (keys full-rows))
+          updated-old-shape (remove-full-row-squares (:squares old-shape) (keys full-rows))
           all-squares (vec (concat updated-old-shape updated-existing-shapes))]
-      #_(if (not-empty full-rows) (prn "there is a full row!") nil)
-      [(apply-shape game-map all-squares) (mixin-old-shape updated-existing-shapes old-shape)])
+      [(apply-shape game-map all-squares) (mixin-old-shape updated-existing-shapes updated-old-shape)])
     (let [all-squares (vec (concat squares existing-shapes))]
-      [(apply-shape (clear-map game-map) all-squares) existing-shapes]))
-
-  #_(let [[game-map updated-existing-shapes] (condp = reached-bottom?
-                   true (let [full-rows (get-full-rows existing-shapes old-shape)]
-                          (prn "full rows" full-rows)
-                          (clear-rows game-map existing-shapes (keys full-rows)))
-                   false [(clear-map game-map) existing-shapes])
-        updated-old-shape (clear-rows-in-old-shape squares full-rows)
-        all-squares (vec (concat updated-old-shape updated-existing-shapes))] ; consider adding remove-full rows here. it should take full-rows parameter.
-    ;; add another form  in the above let form where full-rows will be found.
-    [(apply-shape game-map all-squares) updated-existing-shapes]))
+      [(apply-shape (clear-map game-map) all-squares) existing-shapes])))
 
 (defn move-shape [shape dir existing-shapes]
   "event dispatcher for moving the shape"
@@ -78,11 +68,6 @@
                (rotate shape)) false]
     :default [shape false]))
 
-(defn update-existing-shapes-if-needed [existing-shapes reached-bottom? shape]
-  (if reached-bottom?
-    (vec (concat existing-shapes (:squares shape)))
-    existing-shapes))
-
 (defn transform-state [{:keys [game-map curr-shape existing-shapes] :as state} dir]
   "transforms the whole game state in 4 steps:
     1. move the current falling shape
@@ -90,11 +75,11 @@
     3. update the game-map with the existing shapes
     4. update the existing shapes vector if the current shape has reach the bottom"
   (let [[shape-updated reached-bottom? old-shape] (move-shape curr-shape dir existing-shapes)
-        [updated-game-map existing-shapes] (update-game-map game-map shape-updated reached-bottom? existing-shapes old-shape)]
+        [updated-game-map updated-existing-shapes] (update-game-map game-map shape-updated reached-bottom? existing-shapes old-shape)]
     (assoc state
       :game-map updated-game-map
       :curr-shape shape-updated
-      :existing-shapes existing-shapes #_(update-existing-shapes-if-needed existing-shapes reached-bottom? old-shape))))
+      :existing-shapes updated-existing-shapes)))
 
 (defn update-state-after-event [state last-event]
   "basically the event dispatcher"
