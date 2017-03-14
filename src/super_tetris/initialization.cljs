@@ -1,7 +1,7 @@
 (ns super-tetris.initialization
-  (:use [super-tetris.shape :only [create-shape]]))
+  (:use [super-tetris.shape :only [create-shape move-up move-to-center]]))
 
-(def some-shape (create-shape))
+(def some-shape (move-up (move-to-center (create-shape))))
 
 ;;;functions related to setting up the game state
 

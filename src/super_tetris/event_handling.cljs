@@ -6,7 +6,8 @@
                                    move-left move-right rotate outside-the-map?]])
   (:require [clojure.walk :refer [prewalk]]))
 
-(def map-width 10)
+(def map-width 20)
+
 
 (defn apply-shape [game-map shape]
   (letfn [(-show-square [game-map curr]
@@ -55,7 +56,7 @@
                    (will-touch-existing-shapes? (move-left shape) existing-shapes))
              shape
              (move-left shape)) false]
-    :right [(if (or (= 9 (get-right-side-x shape))
+    :right [(if (or (= (dec map-width) (get-right-side-x shape))
                     (will-touch-existing-shapes? (move-right shape) existing-shapes))
               shape
               (move-right shape)) false]

@@ -10,8 +10,8 @@
 
 ;;constants
 (def gap-width 2)
-(def horizontal-count 10)
-(def vertical-count 10)
+(def horizontal-count 20)
+(def vertical-count 30)
 (def sq-size 15)
 (def tick-interval 5000)
 (def key-map {37 :left-key 39 :right-key 38 :rotate-key 40 :down-key})

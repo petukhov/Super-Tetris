@@ -1,8 +1,9 @@
-(ns super-tetris.shape)
+(ns super-tetris.shape
+  (:use [super-tetris.config :only [horizontal-count vertical-count]]))
 
-(def bottom-y 9)
+(enable-console-print!)
 
-(def initial-squares [[0 0] [0 1] [0 2]])
+(def bottom-y (dec vertical-count))
 
 ;; helper functions. used in find-center and then in implementation of IShape protocol
 
@@ -44,6 +45,47 @@
         y-offset (+ top-y (.round js/Math (quot height 2)))]
     [x-offset y-offset]))
 
+(defn- put-square-or-nil [shape square dir]
+  (let [neighbor-square (-> square
+                            (update 0 + (get dir 0))
+                            (update 1 + (get dir 1)))]
+    (if (some #{neighbor-square} shape)
+      nil
+      neighbor-square)))
+
+(defn- get-free-positions-around [shape square]
+  (vec (filter (complement nil?) (-> []
+                                 (conj (put-square-or-nil shape square [1 0]))
+                                 (conj (put-square-or-nil shape square [-1 0]))
+                                 (conj (put-square-or-nil shape square [0 1]))
+                                 (conj (put-square-or-nil shape square [0 -1]))))))
+
+(defn- random-square-on-surface [shape surface]
+  (let [some-existing-square (get surface (rand-int (count surface)))
+        free-positions (get-free-positions-around shape some-existing-square)
+        the-square (get free-positions (rand-int (count free-positions)))
+        updated-surface (if (nil? the-square)
+                          surface
+                          (vec (conj
+                                 (if (= (count free-positions) 1)
+                                   (remove #(= (first free-positions) %) surface)
+                                   surface)
+                                 the-square)))]
+    (if (nil? the-square) (prn "there is a nil square" some-existing-square))
+    [updated-surface the-square]))
+
+
+(defn- generate-shape [size]
+  (loop [shape [[0 0]]
+         surface [[0 0]]
+         counter 0]
+    (if (>= counter size)
+      shape
+      (let [[updated-surface random-square] (random-square-on-surface shape surface)
+            updated-shape (if (nil? random-square)
+                            shape
+                            (vec (conj shape random-square)))]
+        (recur updated-shape updated-surface (inc counter))))))
 
 (defprotocol IShape
   (get-left-side-x [_])
@@ -90,12 +132,12 @@
 
   (outside-the-map? [this]
     (or (< (get-left-side-x this) 0)
-        (> (get-right-side-x this) 9)
+        (> (get-right-side-x this) (dec horizontal-count))
         (> (get-bottom-y this) bottom-y)))
 
   (move-to-center [this]
     (let [shape-width (- (get-right-side-x this) (get-left-side-x this))
-          offset (js/Math.floor (- 5 (/ shape-width 2)))]
+          offset (js/Math.floor (- (/ horizontal-count 2) (/ shape-width 2)))]
       (->Shape
         (map #(update % 0 + offset) squares)
         (update center 0 + offset))))
@@ -131,4 +173,5 @@
 
 
 (defn create-shape []
-  (->Shape initial-squares (find-center initial-squares)))
+  (let [generated-shape (generate-shape 10)]
+    (->Shape generated-shape (find-center generated-shape))))
