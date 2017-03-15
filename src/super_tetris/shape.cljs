@@ -1,8 +1,6 @@
 (ns super-tetris.shape
   (:use [super-tetris.config :only [horizontal-count vertical-count]]))
 
-(enable-console-print!)
-
 (def bottom-y (dec vertical-count))
 
 ;; helper functions. used in find-center and then in implementation of IShape protocol
@@ -64,14 +62,11 @@
   (let [some-existing-square (get surface (rand-int (count surface)))
         free-positions (get-free-positions-around shape some-existing-square)
         the-square (get free-positions (rand-int (count free-positions)))
-        updated-surface (if (nil? the-square)
-                          surface
-                          (vec (conj
-                                 (if (= (count free-positions) 1)
-                                   (remove #(= (first free-positions) %) surface)
-                                   surface)
-                                 the-square)))]
-    (if (nil? the-square) (prn "there is a nil square" some-existing-square))
+        updated-surface (vec (conj
+                               (if (= (count free-positions) 1)
+                                 (remove #(= some-existing-square %) surface)
+                                 surface)
+                               the-square))]
     [updated-surface the-square]))
 
 
@@ -82,9 +77,7 @@
     (if (>= counter size)
       shape
       (let [[updated-surface random-square] (random-square-on-surface shape surface)
-            updated-shape (if (nil? random-square)
-                            shape
-                            (vec (conj shape random-square)))]
+            updated-shape (vec (conj shape random-square))]
         (recur updated-shape updated-surface (inc counter))))))
 
 (defprotocol IShape
