@@ -1,6 +1,6 @@
 (ns super-tetris.initialization
   (:use [super-tetris.shape :only [create-shape move-up move-to-center]])
-  (:require [super-tetris.config :refer [initial-square-count]]))
+  (:require [super-tetris.config :refer [initial-square-count vertical-count horizontal-count]]))
 
 (def some-shape (move-up (move-to-center (create-shape initial-square-count))))
 
@@ -23,12 +23,19 @@
        (map #(vec %))
        (vec)))
 
+;; used for debugging
+(defn gen-bottom-rows [count]
+  (let [random-column (rand-int horizontal-count)]
+    (vec (apply concat (for [x (filter #(not= % random-column) (take horizontal-count (range)))
+                             :let [y (dec vertical-count)]]
+                         (map (fn [row] [x (- y row)]) (take count (range))))))))
+
 (defn init-game-state [& args]
   (let [[width height] (apply calculate-dimensions args)]
     {:game-map (apply gen-game-map args)
      :width width
      :height height
      :curr-shape some-shape
-     :existing-shapes []
+     :existing-shapes (gen-bottom-rows 2)
      :square-count initial-square-count
      :y-pos 0}))

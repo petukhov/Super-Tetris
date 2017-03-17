@@ -36,6 +36,9 @@
 (defn mixin-old-shape [existing-shapes old-shape]
   (vec (concat existing-shapes old-shape)))
 
+(defn create-new-positioned-shape [square-count]
+  (move-up (move-to-center (create-shape square-count))))
+
 (defn update-game-map [game-map {:keys [squares] :as curr-shape} reached-bottom? existing-shapes old-shape square-count]
   (assert squares ":squares is not defined")
   (if reached-bottom?
@@ -45,7 +48,7 @@
           all-squares (vec (concat updated-old-shape updated-existing-shapes))
           new-square-count (+ square-count (count (keys full-rows)))
           new-shape (if (> (count (keys full-rows)) 0)
-                      (move-up (move-to-center (create-shape new-square-count)))
+                      (create-new-positioned-shape new-square-count)
                       curr-shape)]
       [(apply-shape game-map all-squares) (mixin-old-shape updated-existing-shapes updated-old-shape) new-square-count new-shape])
     (let [all-squares (vec (concat squares existing-shapes))]
@@ -63,7 +66,7 @@
               shape
               (move-right shape)) false]
     :down (if (will-stop? shape existing-shapes)
-            [(move-up (move-to-center (create-shape square-count))) true shape]
+            [(create-new-positioned-shape square-count) true shape]
             [(move-down shape) false])
     :rotate [(if (or (outside-the-map? (rotate shape))
                      (will-touch-existing-shapes? (rotate shape) existing-shapes))
