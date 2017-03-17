@@ -47,10 +47,9 @@
           new-shape (if (> (count (keys full-rows)) 0)
                       (move-up (move-to-center (create-shape new-square-count)))
                       curr-shape)]
-      #_(prn squares)
       [(apply-shape game-map all-squares) (mixin-old-shape updated-existing-shapes updated-old-shape) new-square-count new-shape])
     (let [all-squares (vec (concat squares existing-shapes))]
-      [(apply-shape (clear-map game-map) all-squares) existing-shapes square-count])))
+      [(apply-shape (clear-map game-map) all-squares) existing-shapes square-count curr-shape])))
 
 (defn move-shape [shape dir existing-shapes square-count]
   "event dispatcher for moving the shape"
@@ -84,20 +83,16 @@
                                                     existing-shapes
                                                     square-count
                                                     )
-        [updated-game-map updated-existing-shapes new-square-count shape-updated-maybe] (update-game-map
+        [updated-game-map updated-existing-shapes new-square-count shape-updated-again-maybe] (update-game-map
                                                                       game-map
                                                                       shape-updated
                                                                       reached-bottom?
                                                                       existing-shapes
                                                                       old-shape
-                                                                      square-count)
-        shape-updated (if (= new-square-count square-count)
-                        shape-updated
-                        shape-updated-maybe)]
-    #_(prn "square count: " square-count "new square count: " new-square-count)
+                                                                      square-count)]
     (assoc state
       :game-map updated-game-map
-      :curr-shape shape-updated
+      :curr-shape shape-updated-again-maybe
       :existing-shapes updated-existing-shapes
       :square-count new-square-count)))
 
