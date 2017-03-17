@@ -36,16 +36,19 @@
 (defn mixin-old-shape [existing-shapes old-shape]
   (vec (concat existing-shapes old-shape)))
 
-(defn update-game-map [game-map {:keys [squares]} reached-bottom? existing-shapes old-shape square-count]
+(defn update-game-map [game-map {:keys [squares] :as curr-shape} reached-bottom? existing-shapes old-shape square-count]
   (assert squares ":squares is not defined")
   (if reached-bottom?
     (let [full-rows (get-full-rows existing-shapes old-shape)
           updated-existing-shapes (remove-full-row-squares existing-shapes (keys full-rows))
           updated-old-shape (remove-full-row-squares (:squares old-shape) (keys full-rows))
           all-squares (vec (concat updated-old-shape updated-existing-shapes))
-          new-square-count (+ square-count (count (keys full-rows)))]
-      (prn new-square-count)
-      [(apply-shape game-map all-squares) (mixin-old-shape updated-existing-shapes updated-old-shape) new-square-count])
+          new-square-count (+ square-count (count (keys full-rows)))
+          new-shape (if (> (count (keys full-rows)) 0)
+                      (move-up (move-to-center (create-shape new-square-count)))
+                      curr-shape)]
+      #_(prn squares)
+      [(apply-shape game-map all-squares) (mixin-old-shape updated-existing-shapes updated-old-shape) new-square-count new-shape])
     (let [all-squares (vec (concat squares existing-shapes))]
       [(apply-shape (clear-map game-map) all-squares) existing-shapes square-count])))
 
@@ -81,16 +84,17 @@
                                                     existing-shapes
                                                     square-count
                                                     )
-        [updated-game-map updated-existing-shapes new-square-count] (update-game-map
+        [updated-game-map updated-existing-shapes new-square-count shape-updated-maybe] (update-game-map
                                                                       game-map
                                                                       shape-updated
                                                                       reached-bottom?
                                                                       existing-shapes
                                                                       old-shape
                                                                       square-count)
-        shape-updated shape-updated #_(if (= new-square-count square-count)
+        shape-updated (if (= new-square-count square-count)
                         shape-updated
-                        (move-up (move-to-center (create-shape new-square-counts))))]
+                        shape-updated-maybe)]
+    #_(prn "square count: " square-count "new square count: " new-square-count)
     (assoc state
       :game-map updated-game-map
       :curr-shape shape-updated
