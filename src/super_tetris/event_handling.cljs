@@ -4,10 +4,8 @@
                                    will-touch-existing-shapes? reached-bottom?
                                    move-to-center move-up move-down
                                    move-left move-right rotate outside-the-map?]])
-  (:require [clojure.walk :refer [prewalk]]))
-
-(def map-width 20)
-
+  (:require [clojure.walk :refer [prewalk]]
+            [super-tetris.config :refer [horizontal-count vertical-count]]))
 
 (defn apply-shape [game-map shape]
   (letfn [(-show-square [game-map curr]
@@ -24,7 +22,7 @@
 (defn get-full-rows [existing-shapes {:keys [squares]} ]
   (let [all-squares (vec (concat squares existing-shapes))
         grouped-by-row (group-by second all-squares)]
-    (filter (fn [[_ val]] (= (count val) map-width)) grouped-by-row)))
+    (filter (fn [[_ val]] (= (count val) horizontal-count)) grouped-by-row)))
 
 (defn- belongs-to-row? [full-rows one-square]
   (some #{(second one-square)} full-rows))
@@ -56,7 +54,7 @@
                    (will-touch-existing-shapes? (move-left shape) existing-shapes))
              shape
              (move-left shape)) false]
-    :right [(if (or (= (dec map-width) (get-right-side-x shape))
+    :right [(if (or (= (dec horizontal-count) (get-right-side-x shape))
                     (will-touch-existing-shapes? (move-right shape) existing-shapes))
               shape
               (move-right shape)) false]

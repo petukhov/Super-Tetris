@@ -3,15 +3,14 @@
   (:require [goog.events :as events]
             [cljs.core.async :refer [put! chan <! >! timeout close! alts!]]
             [super-tetris.initialization :refer [init-game-state]]
-            [super-tetris.event-handling :refer [update-state-after-event]]))
+            [super-tetris.event-handling :refer [update-state-after-event]]
+            [super-tetris.config :refer [horizontal-count vertical-count]]))
 
 (enable-console-print!)
 (declare .requestAnimationFrame)
 
 ;;constants
 (def gap-width 2)
-(def horizontal-count 20)
-(def vertical-count 30)
 (def sq-size 15)
 (def tick-interval 5000)
 (def key-map {37 :left-key 39 :right-key 38 :rotate-key 40 :down-key})
