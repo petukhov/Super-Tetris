@@ -36,18 +36,20 @@
 (defn mixin-old-shape [existing-shapes old-shape]
   (vec (concat existing-shapes old-shape)))
 
-(defn update-game-map [game-map {:keys [squares]} reached-bottom? existing-shapes old-shape]
+(defn update-game-map [game-map {:keys [squares]} reached-bottom? existing-shapes old-shape square-count]
   (assert squares ":squares is not defined")
   (if reached-bottom?
     (let [full-rows (get-full-rows existing-shapes old-shape)
           updated-existing-shapes (remove-full-row-squares existing-shapes (keys full-rows))
           updated-old-shape (remove-full-row-squares (:squares old-shape) (keys full-rows))
-          all-squares (vec (concat updated-old-shape updated-existing-shapes))]
-      [(apply-shape game-map all-squares) (mixin-old-shape updated-existing-shapes updated-old-shape)])
+          all-squares (vec (concat updated-old-shape updated-existing-shapes))
+          new-square-count (+ square-count (count (keys full-rows)))]
+      (prn new-square-count)
+      [(apply-shape game-map all-squares) (mixin-old-shape updated-existing-shapes updated-old-shape) new-square-count])
     (let [all-squares (vec (concat squares existing-shapes))]
-      [(apply-shape (clear-map game-map) all-squares) existing-shapes])))
+      [(apply-shape (clear-map game-map) all-squares) existing-shapes square-count])))
 
-(defn move-shape [shape dir existing-shapes]
+(defn move-shape [shape dir existing-shapes square-count]
   "event dispatcher for moving the shape"
   (case dir
     :left [(if (or (zero? (get-left-side-x shape))
@@ -59,7 +61,7 @@
               shape
               (move-right shape)) false]
     :down (if (will-stop? shape existing-shapes)
-            [(move-up (move-to-center (create-shape))) true shape]
+            [(move-up (move-to-center (create-shape square-count))) true shape]
             [(move-down shape) false])
     :rotate [(if (or (outside-the-map? (rotate shape))
                      (will-touch-existing-shapes? (rotate shape) existing-shapes))
@@ -67,18 +69,33 @@
                (rotate shape)) false]
     :default [shape false]))
 
-(defn transform-state [{:keys [game-map curr-shape existing-shapes] :as state} dir]
+(defn transform-state [{:keys [game-map curr-shape existing-shapes square-count] :as state} dir]
   "transforms the whole game state in 4 steps:
     1. move the current falling shape
     2. update the game-map with the updated shape
     3. update the game-map with the existing shapes
     4. update the existing shapes vector if the current shape has reach the bottom"
-  (let [[shape-updated reached-bottom? old-shape] (move-shape curr-shape dir existing-shapes)
-        [updated-game-map updated-existing-shapes] (update-game-map game-map shape-updated reached-bottom? existing-shapes old-shape)]
+  (let [[shape-updated reached-bottom? old-shape] (move-shape
+                                                    curr-shape
+                                                    dir
+                                                    existing-shapes
+                                                    square-count
+                                                    )
+        [updated-game-map updated-existing-shapes new-square-count] (update-game-map
+                                                                      game-map
+                                                                      shape-updated
+                                                                      reached-bottom?
+                                                                      existing-shapes
+                                                                      old-shape
+                                                                      square-count)
+        shape-updated shape-updated #_(if (= new-square-count square-count)
+                        shape-updated
+                        (move-up (move-to-center (create-shape new-square-counts))))]
     (assoc state
       :game-map updated-game-map
       :curr-shape shape-updated
-      :existing-shapes updated-existing-shapes)))
+      :existing-shapes updated-existing-shapes
+      :square-count new-square-count)))
 
 (defn update-state-after-event [state last-event]
   "basically the event dispatcher"

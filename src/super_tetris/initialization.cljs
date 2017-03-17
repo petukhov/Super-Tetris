@@ -1,7 +1,8 @@
 (ns super-tetris.initialization
-  (:use [super-tetris.shape :only [create-shape move-up move-to-center]]))
+  (:use [super-tetris.shape :only [create-shape move-up move-to-center]])
+  (:require [super-tetris.config :refer [initial-square-count]]))
 
-(def some-shape (move-up (move-to-center (create-shape))))
+(def some-shape (move-up (move-to-center (create-shape initial-square-count))))
 
 ;;;functions related to setting up the game state
 
@@ -29,4 +30,5 @@
      :height height
      :curr-shape some-shape
      :existing-shapes []
+     :square-count initial-square-count
      :y-pos 0}))

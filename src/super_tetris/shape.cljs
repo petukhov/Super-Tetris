@@ -165,6 +165,6 @@
       (->Shape squares-rotated center))))
 
 
-(defn create-shape []
-  (let [generated-shape (generate-shape 10)]
+(defn create-shape [square-count]
+  (let [generated-shape (generate-shape square-count)]
     (->Shape generated-shape (find-center generated-shape))))
